@@ -28,10 +28,14 @@ class JobsListViewModel(app: Application) : AndroidViewModel(app) {
     private val scope = CoroutineScope(Dispatchers.IO + job)
     private val connectivityManager: ConnectivityManager =
         app.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-    val isLoading = MutableLiveData<Boolean>().apply {
-        value = false
-    }
-    val isConnected = MutableLiveData<Boolean>()
+
+    private val _isLoading = MutableLiveData<Boolean>()
+    val isLoading: LiveData<Boolean>
+        get() = _isLoading
+
+    private val _isConnected = MutableLiveData<Boolean>()
+    val isConnected: LiveData<Boolean>
+        get() = _isConnected
 
     fun loadData(
         language: String = DEFAULT_LANGUAGE,
@@ -40,16 +44,16 @@ class JobsListViewModel(app: Application) : AndroidViewModel(app) {
         val jobsList = MutableLiveData<List<JobGitHub>>()
         if (isOnline()) {
             scope.launch {
-                isLoading.postValue(true)
+                _isLoading.postValue(true)
                 try {
                     jobsList.postValue(repository.getJobs(language, location))
                 } catch (e: Exception) {
-                    isConnected.postValue(false)
+                    _isConnected.postValue(false)
                 }
-                isLoading.postValue(false)
+                _isLoading.postValue(false)
             }
         } else {
-            isConnected.value = false
+            _isConnected.value = false
         }
         return jobsList
 
@@ -57,7 +61,7 @@ class JobsListViewModel(app: Application) : AndroidViewModel(app) {
 
     private fun isOnline(): Boolean {
         val networkInfo: NetworkInfo? = connectivityManager.activeNetworkInfo
-        isConnected.value = networkInfo?.isConnected == true
+        _isConnected.value = networkInfo?.isConnected == true
         return networkInfo?.isConnected == true
     }
 
